@@ -1,0 +1,70 @@
+{
+  // Exemples a adapter : chemins, ports et variables d'environnement du
+  // projet reel. Rien ici ne doit dependre du poste hote. Retirer les
+  // configurations qui ne concernent pas le projet.
+  "version": "0.2.0",
+  "configurations": [
+    // ----------------------------------------------------- Applications
+    {
+      "name": "Flask - mon-projet (3000)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/server.py",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "PORT": "3000",
+        "HOST": "127.0.0.1",
+        "FLASK_ENV": "development"
+      }
+    },
+    {
+      "name": "FastAPI (uvicorn) - mon-projet (8000)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": ["mon_projet.api.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "envFile": "${workspaceFolder}/.env"
+    },
+    {
+      "name": "Node - mon-projet (3000)",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/server.js",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"],
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "PORT": "3000",
+        "HOST": "127.0.0.1"
+      }
+    },
+
+    // ------------------------------------------------------------ Tests
+    {
+      "name": "Tests pytest (fichier courant)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": ["${file}", "-v"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "Tests JS - node --test (fichier courant)",
+      "type": "node",
+      "request": "launch",
+      "runtimeArgs": ["--test", "${file}"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    }
+  ]
+}

@@ -1,0 +1,130 @@
+{
+  // Aucun reglage ici ne doit dependre du poste hote (pas de chemin Windows,
+  // pas de venv local, pas de profil de terminal specifique a l'hote) : tout
+  // le developpement se fait dans le conteneur. L'interpreteur Python est
+  // fixe par devcontainer.json (.venv/bin/python, cree par uv sync).
+  "files.encoding": "utf8",
+  "files.eol": "\n",
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "editor.detectIndentation": true,
+  "editor.tabSize": 2,
+  "editor.rulers": [100, 120],
+  "editor.formatOnSave": false,
+
+  // ruff format ; longueur de ligne dans le pyproject.toml du projet. Retirer
+  // ce bloc si le projet ne declare pas ruff en dependance de dev.
+  "[python]": {
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true,
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnSave": true
+  },
+
+  "[javascript]": {
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+
+  "[json]": {
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+
+  "[jsonc]": {
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+
+  "[yaml]": {
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true
+  },
+
+  "[markdown]": {
+    "editor.wordWrap": "on",
+    "editor.formatOnSave": false
+  },
+
+  // Meme choix que dans devcontainer.json. pytest execute aussi bien des
+  // tests pytest natifs que des classes unittest.TestCase existantes.
+  "python.analysis.extraPaths": ["${workspaceFolder}"],
+  "python.terminal.activateEnvironment": true,
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true,
+  "python.testing.pytestArgs": ["tests"],
+
+  "eslint.validate": ["javascript", "javascriptreact"],
+  "prettier.requireConfig": false,
+  "docker.extension.enableComposeLanguageServer": true,
+
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/.ruff_cache": true,
+    "**/.mypy_cache": true,
+    "**/.venv": true,
+    "**/venv": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/htmlcov": true,
+    "**/.visuel": true,
+    "**/.docker-data": true,
+    "**/.git": true
+  },
+
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/__pycache__/**": true,
+    "**/.pytest_cache/**": true,
+    "**/.ruff_cache/**": true,
+    "**/.mypy_cache/**": true,
+    "**/.venv/**": true,
+    "**/venv/**": true,
+    "**/dist/**": true,
+    "**/build/**": true,
+    "**/htmlcov/**": true,
+    "**/.visuel/**": true,
+    "**/.docker-data/**": true,
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true
+  },
+
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/.ruff_cache": true,
+    "**/.mypy_cache": true,
+    "**/.venv": true,
+    "**/venv": true,
+    "**/dist": true,
+    "**/build": true
+  },
+
+  "files.associations": {
+    "Dockerfile": "dockerfile",
+    "Dockerfile.*": "dockerfile",
+    "*.dockerfile": "dockerfile",
+    ".env": "dotenv",
+    ".env.*": "dotenv",
+    "*.env": "dotenv",
+    "*.yml": "yaml",
+    "*.yaml": "yaml"
+  },
+
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.patterns": {
+    "Dockerfile": ".dockerignore,Dockerfile.*",
+    "Dockerfile.*": ".dockerignore",
+    "docker-compose.yml": "docker-compose.*.yml,.env,.env.*",
+    "docker-compose.yaml": "docker-compose.*.yaml,.env,.env.*",
+    "package.json": "package-lock.json,npm-shrinkwrap.json,yarn.lock,pnpm-lock.yaml,.npmrc",
+    "requirements.txt": "requirements-*.txt,pyproject.toml,poetry.lock,Pipfile,Pipfile.lock",
+    "requirements-*.txt": "pyproject.toml",
+    "pyproject.toml": "uv.lock,ruff.toml,mypy.ini,.python-version,.coverage"
+  }
+}

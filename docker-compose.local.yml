@@ -1,0 +1,40 @@
+# =============================================================================
+# docker-compose.local.yml - lancement LOCAL du projet mon-projet
+# =============================================================================
+# A quoi sert ce fichier
+#   Demarre l'application sur le poste du developpeur (ou dans le
+#   devcontainer) avec "docker compose -f docker-compose.local.yml up --build".
+#   Il construit l'image depuis le MEME Dockerfile que la CI et le deploiement, de
+#   facon a tester en local ce qui sera deploye.
+#
+# Qui le lit : Docker Compose, lance par le developpeur.
+#
+# Ce qu'on y met
+#   - le service de l'application (build: ., env_file: .env) ;
+#   - les donnees dans ./.docker-data (ignore par Git) ;
+#   - un port publie sur localhost pour tester dans le navigateur ;
+#   - la route /health pour verifier que l'application repond ;
+#   - restart: unless-stopped comme en recette et en production.
+#
+# Ce qu'on n'y met JAMAIS : un secret en clair (utiliser .env, voir
+#   .env.example), ni la configuration de deploiement
+#   (reverse proxy, plateforme).
+#
+# Comment le remplir
+#   Voir docs/02 a docs/04 (Dockerfile, compose). Port et commande de
+#   l'application : <à renseigner>.
+#
+# Exemple (a decommenter et adapter) :
+# services:
+#   mon-projet:
+#     build:
+#       context: .
+#       dockerfile: Dockerfile
+#     image: mon-projet:local
+#     env_file: .env
+#     ports:
+#       - "127.0.0.1:8000:8000"
+#     volumes:
+#       - ./.docker-data:/data
+#     restart: unless-stopped
+# =============================================================================

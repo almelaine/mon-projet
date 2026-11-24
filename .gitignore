@@ -1,0 +1,46 @@
+# Configuration locale et secrets
+.env
+.env.*
+!.env.example
+
+# Donnees runtime
+sessions.json
+**/sessions.json
+*.db
+*.db-*
+uploads/
+exports/
+.docker-data/
+
+# Dependances JavaScript (npm ci)
+node_modules/
+# Captures de la verification visuelle / Playwright
+.visuel/
+test-results/
+playwright-report/
+
+# Python (caches et outils)
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.venv/
+.venv.*/
+venv/
+
+# IDE et systeme
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/settings.json
+!.vscode/tasks.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# Cles et certificats
+*.pem
+*.key

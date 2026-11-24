@@ -1,0 +1,46 @@
+# =============================================================================
+# .dockerignore - fichiers exclus du contexte de build Docker
+# =============================================================================
+# A quoi sert ce fichier
+#   Docker le lit a chaque "docker build" (local, CI, deploiement) pour
+#   savoir quels fichiers du depot NE PAS envoyer au build. Un contexte plus
+#   petit = un build plus rapide, et surtout aucun secret ni donnee locale
+#   embarque par erreur dans l'image poussee sur le registre.
+#
+# Qui le lit : Docker (docker build / docker compose build). Rien d'autre.
+#
+# Ce qu'on y met
+#   - l'historique et l'outillage : .git, .devcontainer, .vscode, .claude, docs
+#   - les caches et dependances locales : .venv, __pycache__, node_modules,
+#     .pytest_cache, .ruff_cache, .mypy_cache
+#   - les donnees locales : .docker-data, *.db
+#   - les fichiers de configuration locale : .env et .env.* (sauf les
+#     fichiers *.example, inutiles dans l'image de toute facon)
+#
+# Ce qu'on n'y met JAMAIS : rien de ce dont le Dockerfile a besoin pour
+#   construire l'image (code source, pyproject.toml, uv.lock, etc.).
+#   Un secret reel n'a pas sa place dans le depot : voir .env.example.
+#
+# Comment le remplir
+#   Voir docs/02 a docs/04 (Dockerfile et image). Ce fichier est a
+#   completer avec le Dockerfile du projet mon-projet ; a valider avec
+#   "docker build" en local avant de pousser.
+#
+# Exemple (a decommenter et adapter) :
+# .git
+# .devcontainer
+# .vscode
+# .claude
+# docs
+# .venv
+# __pycache__/
+# *.py[cod]
+# .pytest_cache
+# .ruff_cache
+# .mypy_cache
+# node_modules
+# .docker-data
+# *.db
+# .env
+# .env.*
+# =============================================================================

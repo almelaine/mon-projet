@@ -1,0 +1,186 @@
+{
+  // Toutes les commandes ci-dessous s'executent DANS le conteneur (terminal
+  // integre de VS Code quand "Reopen in Container" est actif). Aucune tache
+  // ne doit invoquer PowerShell, un chemin Windows ou un outil du poste
+  // hote : le developpement ne depend que du conteneur.
+  //
+  // C'est un menu : retirer les taches qui ne concernent pas le projet.
+  //   Tests, lint, types, deps (uv)    : "Tests - pytest*", "Lint - *",
+  //                                      "Types - mypy", "Qualite - tout",
+  //                                      "Deps - uv sync"
+  //   Interface JavaScript             : "Tests JS - *"
+  // Si le projet ne declare pas ruff/mypy en dependances de dev (pyproject.toml) :
+  // retirer "Lint - *", "Types - mypy" et "Qualite - tout" du menu - sans quoi
+  // elles echouent en "command not found" si on les lance (jamais lancees
+  // automatiquement, donc sans consequence si on oublie de les retirer).
+  // Une seule tache doit garder "isDefault": true dans le groupe "test".
+  "version": "2.0.0",
+  "tasks": [
+    // ---------------------------------------------------------------- Tests
+    {
+      "label": "Tests - pytest",
+      "detail": "pytest depuis le .venv cree par uv sync (fait aussi tourner les classes unittest.TestCase existantes).",
+      "type": "shell",
+      "group": { "kind": "test", "isDefault": true },
+      "options": { "cwd": "${workspaceFolder}" },
+      "command": "uv run pytest -v",
+      "problemMatcher": []
+    },
+    {
+      "label": "Tests - pytest couverture",
+      "detail": "Couverture (seuil --cov-fail-under dans pyproject.toml).",
+      "type": "shell",
+      "group": "test",
+      "options": { "cwd": "${workspaceFolder}" },
+      "command": "uv run pytest --cov --cov-report=term-missing",
+      "problemMatcher": []
+    },
+    {
+      "label": "Tests JS - node --test (jsdom)",
+      "detail": "Banc d'essai de l'interface : script npm test:js.",
+      "type": "shell",
+      "group": "test",
+      "options": { "cwd": "${workspaceFolder}" },
+      "command": "npm run test:js",
+      "problemMatcher": []
+    },
+    {
+      "label": "Tests JS - Playwright (visuel)",
+      "detail": "Verification dans un vrai navigateur : l'application doit tourner a part. Script npm test:visuel.",
+      "type": "shell",
+      "group": "test",
+      "options": { "cwd": "${workspaceFolder}" },
+      "command": "npm run test:visuel",
+      "problemMatcher": []
+    },
+
+    // -------------------------------------------------------------- Qualite
+    {
+      "label": "Lint - ruff",
+      "type": "shell",
+      "options": { "cwd": "${workspaceFolder}" },
+      "command": "uv run ruff check . && uv run ruff format --check .",
+      "problemMatcher": []
+    },
+    {
+      "label": "Lint - ruff (corriger)",
+      "type": "shell",
+      "options": { "cwd": "${workspaceFolder}" },
+      "command": "uv run ruff check --fix . && uv run ruff format .",
+      "problemMatcher": []
+    },
+    {
+      "label": "Types - mypy",
+      "type": "shell",
+      "options": { "cwd": "${workspaceFolder}" },
+      "command": "uv run mypy .",
+      "problemMatcher": []
+    },
+    {
+      "label": "Qualite - tout (comme la CI)",
+      "detail": "Lint, format, types, tests : ce que la CI executera.",
+      "type": "shell",
+      "group": { "kind": "build", "isDefault": true },
+      "options": { "cwd": "${workspaceFolder}" },
+      "command": "uv run ruff check . && uv run ruff format --check . && uv run mypy . && uv run pytest -v",
+      "problemMatcher": []
+    },
+
+    // ----------------------------------------------------------- Dependances
+    {
+      "label": "Deps - uv sync",
+      "detail": "Recree .venv d'apres pyproject.toml et uv.lock.",
+      "type": "shell",
+      "options": { "cwd": "${workspaceFolder}" },
+      "command": "uv sync --all-extras",
+      "problemMatcher": []
+    },
+    {
+      "label": "Deps - npm ci",
+      "detail": "Outillage JavaScript, reproductible comme la CI.",
+      "type": "shell",
+      "options": { "cwd": "${workspaceFolder}" },
+      "command": "npm ci --no-audit --no-fund",
+      "problemMatcher": []
+    },
+
+    // ------------------------------------------------------------------- App
+    {
+      "label": "App - demarrage",
+      "detail": "Adapter au point d'entree reel (server.py, server.js, uvicorn...).",
+      "type": "shell",
+      "options": { "cwd": "${workspaceFolder}" },
+      "command": "PORT=3000 python server.py",
+      "problemMatcher": []
+    },
+    {
+      "label": "Env - versions installees",
+      "type": "shell",
+      "options": { "cwd": "${workspaceFolder}" },
+      "command": "python --version && uv --version && node --version && npm --version && docker --version",
+      "problemMatcher": []
+    },
+
+    // ---------------------------------------------------------------- Docker
+    {
+      "label": "Docker - compose config",
+      "type": "shell",
+      "options": { "cwd": "${workspaceFolder}" },
+      "command": "docker compose --env-file .env -f docker-compose.local.yml config",
+      "problemMatcher": []
+    },
+    {
+      "label": "Docker - build",
+      "type": "shell",
+      "options": { "cwd": "${workspaceFolder}" },
+      "command": "docker compose --env-file .env -f docker-compose.local.yml build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Docker - up",
+      "type": "shell",
+      "options": { "cwd": "${workspaceFolder}" },
+      "command": "docker compose --env-file .env -f docker-compose.local.yml up -d",
+      "problemMatcher": []
+    },
+    {
+      "label": "Docker - down",
+      "type": "shell",
+      "options": { "cwd": "${workspaceFolder}" },
+      "command": "docker compose --env-file .env -f docker-compose.local.yml down",
+      "problemMatcher": []
+    },
+    {
+      "label": "Docker - logs",
+      "type": "shell",
+      "options": { "cwd": "${workspaceFolder}" },
+      "command": "docker compose --env-file .env -f docker-compose.local.yml logs -f --tail=200",
+      "problemMatcher": []
+    },
+
+    // ------------------------------------------------------------ Inventaire
+    // Controles de portabilite : rien ne doit dependre du
+    // poste hote ni d'un port fige. Adapter les motifs au projet.
+    {
+      "label": "Inventaire - ports codes en dur",
+      "type": "shell",
+      "options": { "cwd": "${workspaceFolder}" },
+      "command": "grep -rnE '\\b(3000|3001|3002|3003|3004|3005|5000|5001|8000)\\b|listen\\s*\\(|app\\.run\\s*\\(|\\bPORT\\b' --include='*.py' --include='*.js' --include='*.mjs' --include='*.json' --include='*.html' --include='*.yml' --include='*.md' --exclude-dir=node_modules --exclude-dir=__pycache__ --exclude-dir=.venv --exclude-dir=.git --exclude-dir=vendor --exclude-dir=output . || true",
+      "problemMatcher": []
+    },
+    {
+      "label": "Inventaire - variables environnement",
+      "type": "shell",
+      "options": { "cwd": "${workspaceFolder}" },
+      "command": "grep -rnE 'process\\.env|os\\.environ|getenv|dotenv|BaseSettings|SECRET_KEY|JWT_SECRET|SMTP_|DATABASE_URL|DB_PATH' --include='*.py' --include='*.js' --include='*.mjs' --include='*.yml' --include='*.md' --include='.env.example' --exclude-dir=node_modules --exclude-dir=__pycache__ --exclude-dir=.venv --exclude-dir=.git --exclude-dir=output . || true",
+      "problemMatcher": []
+    },
+    {
+      "label": "Inventaire - chemins Windows codes en dur",
+      "type": "shell",
+      "options": { "cwd": "${workspaceFolder}" },
+      "command": "grep -rnE '[A-Z]:\\\\\\\\|[A-Z]:/|Users\\\\\\\\|Desktop\\\\\\\\|Documents\\\\\\\\|powershell\\.exe' --include='*.py' --include='*.js' --include='*.mjs' --include='*.json' --include='*.html' --include='*.yml' --include='*.md' --exclude-dir=node_modules --exclude-dir=__pycache__ --exclude-dir=.venv --exclude-dir=.git --exclude-dir=output . || true",
+      "problemMatcher": []
+    }
+  ]
+}

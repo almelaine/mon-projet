@@ -1,0 +1,169 @@
+{
+  // ==========================================================================
+  // Gabarit d'environnement de developpement pour un nouveau projet.
+  //
+  // Regle permanente : la totalite du developpement se deroule DANS ce
+  // conteneur. Aucune commande, aucun outil, aucun interpreteur du poste hote
+  // ne doit etre necessaire : l'hote ne sert qu'a lancer Docker. C'est pour
+  // cela que Docker-in-Docker est inclus ci-dessous : meme les commandes
+  // "docker compose ..." du projet s'executent depuis l'interieur de ce
+  // conteneur, jamais depuis le poste.
+  //
+  // Profil unique pour tous les nouveaux projets : uv + pyproject.toml +
+  // pytest (+ ruff/mypy en dependances optionnelles). post-create.sh lance
+  // toujours "uv sync --all-extras". Ce qui reste un choix par projet (base
+  // de donnees, rigueur ruff/mypy) se regle dans le Dockerfile et le
+  // pyproject.toml du projet, pas ici - voir README.md.
+  //
+  // A faire avant la premiere utilisation :
+  //   1. Copier .devcontainer/, .vscode/ et .claude/ a la racine du depot.
+  //   2. Remplacer toutes les occurrences de mon-projet (ici, dans
+  //      post-create.sh et launch.json) par le nom reel du projet.
+  //   3. Adapter forwardPorts/portsAttributes aux ports reels du projet.
+  //   4. Adapter la liste de paquets du Dockerfile (retirer ce qui ne sert
+  //      pas, decommenter ce qui manque : postgresql-client, chromium,
+  //      poppler-utils...).
+  //   5. Si le depot a deja ses propres fichiers docker-compose, ce conteneur
+  //      doit les PILOTER (docker compose -f ... lance depuis l'interieur),
+  //      pas les remplacer : ne pas ajouter "dockerComposeFile" ici dans ce
+  //      cas, un simple "build" suffit.
+  //   6. Lire les regles de gouvernance du depot (AGENTS.md le cas echeant) :
+  //      un .devcontainer versionne peut etre un changement structurant a
+  //      faire valider avant de commiter.
+  // ==========================================================================
+  "name": "mon-projet - dev local",
+
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+
+  "features": {
+    // Docker-in-Docker : permet de lancer docker / docker compose DANS ce
+    // conteneur, sans toucher au Docker de la machine hote et sans y installer
+    // quoi que ce soit.
+    // moby:false est obligatoire sur les images basees sur Debian "trixie" :
+    // les paquets Moby de Microsoft n'y sont plus publies.
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "moby": false
+    },
+
+    // Node.js LTS. Meme si Node n'est pas un langage du projet, cette feature
+    // est OBLIGATOIRE : la feature claude-code installe le CLI par
+    // "npm install -g" et echoue si Node/npm sont absents de l'image
+    // (constat du 2026-09-04).
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "lts"
+    },
+
+    // Claude Code (CLI + extension).
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
+  },
+
+  // Ordre d'installation force : Node doit preceder claude-code (voir
+  // ci-dessus). Les versions exactes sont figees dans devcontainer-lock.json.
+  "overrideFeatureInstallOrder": [
+    "ghcr.io/devcontainers/features/docker-in-docker",
+    "ghcr.io/devcontainers/features/node",
+    "ghcr.io/anthropics/devcontainer-features/claude-code"
+  ],
+
+  "mounts": [
+    // Session Claude Code (historique, memoire) conservee entre les
+    // reconstructions du conteneur.
+    "source=claude-code-config-${devcontainerId},target=/home/vscode/.claude,type=volume",
+    // Connexion registre Docker conservee (GHCR, Docker Hub...) : le demon
+    // Docker interne ignore le "docker login" fait sur le poste et le perdrait
+    // a chaque reconstruction sans ce volume. A retirer si inutile.
+    //
+    // Les deux cibles sont creees et appropriees a "vscode" dans le
+    // Dockerfile : un volume monte sur un chemin absent de l'image serait
+    // cree "root:root" et rendrait docker inutilisable.
+    "source=docker-auth-${devcontainerId},target=/home/vscode/.docker,type=volume",
+
+    // Plugin ECC (agents, skills, hooks), lu depuis le dossier frere
+    // ../ECC-main (tous les projets perso vivent sous Persos/, a cote de
+    // ECC-main). Lecture seule. Le conteneur REFUSE de demarrer si ce dossier
+    // est absent : retirer cette ligne ainsi que "extraKnownMarketplaces" et
+    // "enabledPlugins" de .claude/settings.json si le plugin n'est pas voulu.
+    // Enregistre comme marketplace "ecc" dans .claude/settings.json.
+    "source=${localWorkspaceFolder}/../ECC-main,target=/opt/ecc,type=bind,readonly"
+
+    // Exemple de montage d'un dossier frere (documentation de reference ou
+    // depot socle). Le conteneur REFUSE de demarrer si le dossier
+    // hote est absent : ne l'activer que si l'arborescence est garantie.
+    // ,"source=${localWorkspaceFolder}/../docs-transverses,target=/workspaces/docs-transverses,type=bind"
+  ],
+
+  "containerEnv": {
+    "CLAUDE_CONFIG_DIR": "/home/vscode/.claude",
+    // uv : le depot est un montage Windows, les liens physiques vers le cache
+    // echouent (avertissement a chaque "uv sync"). Copie a la place.
+    "UV_LINK_MODE": "copy"
+  },
+
+  // Ports du projet, avec une etiquette lisible dans le panneau "Ports".
+  // "onAutoForward": "silent" evite une notification a chaque demarrage.
+  "forwardPorts": [],
+  "portsAttributes": {
+    // "3000": { "label": "mon-projet", "onAutoForward": "silent" }
+  },
+
+  // Le chown des volumes est fait dans post-create.sh (creation) et dans
+  // postStartCommand (rattrapage, a chaque demarrage, des volumes crees en
+  // root sur un poste anterieur au correctif Dockerfile). Pas une troisieme
+  // fois ici.
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "postStartCommand": "sudo chown -R vscode:vscode /home/vscode/.claude /home/vscode/.docker || true",
+
+  "customizations": {
+    "vscode": {
+      // Meme liste que .vscode/extensions.json. ruff et mypy restent inactifs
+      // si le projet ne les declare pas en dependances de dev (pyproject.toml).
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.debugpy",
+        "charliermarsh.ruff",
+        "ms-python.mypy-type-checker",
+        "ms-azuretools.vscode-docker",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "christian-kohler.npm-intellisense",
+        "christian-kohler.path-intellisense",
+        "mikestead.dotenv",
+        "redhat.vscode-yaml",
+        "yzhang.markdown-all-in-one",
+        "davidanson.vscode-markdownlint",
+        "eamodio.gitlens",
+        "alexcvzz.vscode-sqlite",
+        "anthropic.claude-code"
+      ],
+      "settings": {
+        // Le serveur VS Code et son extension host ecoutent sur des ports
+        // ephemeres, renumerotes a chaque connexion : l'auto forward les
+        // memorisait et le panneau "Ports" accumulait des entrees mortes.
+        // Les ports utiles sont declares dans "forwardPorts" ci-dessus.
+        "remote.autoForwardPorts": false,
+
+        // Interpreteur du venv cree par "uv sync" dans post-create.sh.
+        "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+
+        // pytest execute aussi bien des tests pytest natifs que des classes
+        // unittest.TestCase existantes (tests/test_*.py) : un seul chemin.
+        "python.testing.unittestEnabled": false,
+        "python.testing.pytestEnabled": true,
+        "python.testing.pytestArgs": ["tests"],
+
+        "files.exclude": {
+          "**/__pycache__": true,
+          "**/.pytest_cache": true,
+          "**/.ruff_cache": true,
+          "**/.mypy_cache": true
+        }
+      }
+    }
+  },
+
+  // Non-root : exige par Claude Code, et bonne pratique.
+  "remoteUser": "vscode"
+}

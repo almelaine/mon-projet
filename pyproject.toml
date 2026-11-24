@@ -1,0 +1,38 @@
+[project]
+name = "mon-projet"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "pytest-asyncio",
+    "ruff",
+    "mypy",
+]
+
+# Application, pas une bibliotheque a publier : rien a construire ni a
+# installer en editable. Sans cette ligne, "uv sync" essaie de construire un
+# paquet (backend hatchling par defaut) et echoue si aucun repertoire du nom
+# du projet n'existe a la racine - verifie empiriquement le 2026-10-29.
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+# EXE002 (fichier executable sans shebang) se declenche sur CHAQUE fichier
+# sur un bind-mount Windows : NTFS n'a pas de bit d'execution POSIX, donc
+# Docker Desktop monte tout en rwxrwxrwx cote conteneur - faux positif
+# systematique, pas un vrai probleme de fichier. Verifie empiriquement
+# le 2026-10-29 (voir README.md, Pieges connus).
+ignore = ["EXE002"]
+
+[tool.mypy]
+strict = true
